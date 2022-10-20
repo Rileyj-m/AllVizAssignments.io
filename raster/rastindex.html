@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Raster Plot: Net Radiation</title>
+    <!--Load d3.js and anything else needed-->
+    <script src="https://d3js.org/d3.v4.js"></script>
+    <script src="https://d3js.org/d3.v5.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.13.0/d3-legend.js"></script>
+    <script src="geotiff.min.js"></script>
+    <script src="https://d3js.org/d3-geo-projection.v3.min.js"></script>
+    <script src="https://d3js.org/topojson.v1.min.js"></script>
+    <script src="https://unpkg.com/d3-contour@1"></script>
+    <script src="https://d3js.org/d3-scale-chromatic.v0.3.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <style>
+        #container {
+            position: relative;
+            /* we need to stop it from cutting of the left side when re-size without using overflow*/
+            justify-content: center;
+            align-items: center;
+        }
+
+        #rectangle,
+        #Origin {
+            position: absolute;
+        }
+
+        #Origin {
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+
+        #buttons{
+            width: 100%;
+            height: 100%;
+        }
+
+        #rectangle {
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1100px;
+            height: 550px;
+            border: 1px solid black;
+            background-color: #d9d9d9;
+            margin: 0 auto;
+            border-radius: 5px;
+        }
+
+        .shadow {
+            box-shadow:
+                0 0 10px 5px #888888 inset,
+                0 0 10px 5px #888888,
+                0 0 0 0 #888888 inset;
+        }
+
+        #ending{
+            margin-top: 600px;          
+        }
+
+        header{
+            font: 11px sans-serif;
+        }
+
+        body {
+            font: 11px sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .legendCells{
+            transform: translate(0, 10px);
+            font: 12px sans-serif;
+        }
+
+        .legendTitle{
+            font: 11px sans-serif;
+        }
+    </style>
+    <br>
+    <br>
+    <header style="text-align: center;"><b>Hypothesis:</b> There is more net radiation near the equator
+        in the summer months (June, July, August) than any other time during the year.
+    </header>
+    <header style="text-align: center;">
+        <b>Net Radiation Definition:</b> The difference between how much solar energy enters the Earth
+        system and how much heat energy escapes into space (watts per square meter).
+    </header>
+    <header style="text-align: center;">
+        <b>Graph Features:</b> This graph has the ability to zoom.
+    </header>
+    <header style="text-align: center;"><b>Source for Net Radiation Rasters:</b> <a
+            href="https://neo.gsfc.nasa.gov/view.php?datasetId=CERES_NETFLUX_M&year=2021" target="_blank"><u>Net Radiation</u></a>
+    </header>
+</head>
+
+<body>
+    <br>
+    <hr>
+    <br>
+    <br>
+    <div id="container">
+        <div id="rectangle"></div>
+        <div id="Origin" style="text-align: center;">
+            <div id="buttons" style="right: 65%; position: relative; display: block; margin-top: 20px;">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown"
+                        aria-haspopup="true" aria-expanded="false">
+                        Select a Month <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu btn-block">
+                        <li><a class="dropdown-item"
+                                onmousedown="changeRaster('rasters/Jan21.tiff', 'January 2021: Net Radiation')">January</a>
+                        </li>
+                        <li><a class="dropdown-item"
+                                onmousedown="changeRaster('rasters/feb21.tiff', 'February 2021: Net Radiation')">February</a>
+                        </li>
+                        <li><a class="dropdown-item"
+                                onmousedown="changeRaster('rasters/mar21.tiff', 'March 2021: Net Radiation')">March</a>
+                        </li>
+                        <li><a class="dropdown-item"
+                                onmousedown="changeRaster('rasters/apr21.tiff', 'April 2021: Net Radiation')">April</a>
+                        </li>
+                        <li><a class="dropdown-item"
+                                onmousedown="changeRaster('rasters/may21.tiff', 'May 2021: Net Radiation')">May</a></li>
+                        <li><a class="dropdown-item"
+                                onmousedown="changeRaster('rasters/jun21.tiff', 'June 2021: Net Radiation')">June</a>
+                        </li>
+                        <li><a class="dropdown-item"
+                                onmousedown="changeRaster('rasters/jul21.tiff', 'July 2021: Net Radiation')">July</a>
+                        </li>
+                        <li><a class="dropdown-item"
+                                onmousedown="changeRaster('rasters/aug21.tiff', 'August 2021: Net Radiation')">August</a>
+                        </li>
+                        <li><a class="dropdown-item"
+                                onmousedown="changeRaster('rasters/sep21.tiff', 'September 2021: Net Radiation')">September</a>
+                        </li>
+                        <li><a class="dropdown-item"
+                                onmousedown="changeRaster('rasters/oct21.tiff', 'October 2021: Net Radiation')">October</a>
+                        </li>
+                        <li><a class="dropdown-item"
+                                onmousedown="changeRaster('rasters/nov21.tiff', 'November 2021: Net Radiation')">November</a>
+                        </li>
+                        <li><a class="dropdown-item"
+                                onmousedown="changeRaster('rasters/dec21.tiff', 'December 2021: Net Radiation')">December</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <svg class="shadow" id="World" width="720" height="360">
+                <g id="raster"></g>
+                <g id="allobj"></g>
+                <g id="equator"></g>
+                <text id="title"></text>
+            </svg>
+            <div style="margin: 0 auto; position: relative; display: block;">
+                <svg id="seq37" width="100%" height="100%"></svg>
+            </div>
+        </div>
+        <br>
+    </div>
+    <div id="ending">
+        <br>
+        <br>
+        <hr>
+        <br>
+        <br>
+        <br>
+    </div>
+    <script type="text/javascript">
+        let zoom = d3.zoom()
+            .scaleExtent([1, 8])
+            // we can't allow the user to pan outside of the world
+            .translateExtent([
+                [0, 0],
+                [720, 360]
+            ])
+            .on('zoom', handleZoom);
+
+        // handle the elements of the zoom so that nothing is lost
+        function handleZoom(e) {
+            d3.select('#raster')
+                .attr('transform', d3.zoomTransform(this));
+            d3.select('#allobj')
+                .attr('transform', d3.zoomTransform(this));
+            d3.select('#equator')
+                .attr('transform', d3.zoomTransform(this));
+            d3.select('#equatorText')
+                .attr('transform', d3.zoomTransform(this));
+        }
+
+        // call the zoom functions accordingly
+        function initZoom() {
+            d3.select('svg')
+                .call(zoom);
+        }
+
+        // use to create the raster image
+        function renderRaster(image) {
+            d3.request(image).responseType("arraybuffer").get(function (error, request) {
+                if (error) throw error;
+
+                var tiff = GeoTIFF.parse(request.response),
+                    image = tiff.getImage(),
+                    m = image.getHeight(),
+                    n = image.getWidth(),
+                    values = image.readRasters()[0];
+                console.log(values);
+
+                // var color = d3.scaleSequential(d3.interpolateRdYlGn)
+                //     .domain(d3.extent(values));
+
+                var color = d3.scaleLinear()
+                    .domain(d3.extent(values))
+                    .range(["#277da1", "#f94144"]);
+
+                const svg = d3.select("#World"),
+                    width = +svg.attr("width"),
+                    height = +svg.attr("height");
+
+                let projection = d3.geoMercator()
+                    .g// projections screwed up otherwise
+                // .scale(230)
+                // .translate([width / 2, height / 2]);
+
+                var path = d3.geoPath(projection);
+
+                var contours = d3.contours()
+                    .size([n, m]);
+
+                d3.select("#raster")
+                    // .attr("stroke", "#000")
+                    // .attr("stroke-width", 0.5)
+                    // .attr("stroke-linejoin", "round")
+                    .selectAll("path")
+                    .data(contours(values))
+                    .enter().append("path")
+                    .attr("fill", function (d) { return color(d.value); })
+                    .attr("d", path)
+                    .style("opacity", 0.9);
+            })
+        }
+
+        // used to create the map of the world over the raster
+        function renderMap() {
+            const svg = d3.select("#World"),
+                width = +svg.attr("width"),
+                height = +svg.attr("height");
+
+            let projection = d3.geoMercator()
+                .scale(115)
+                .translate([width / 2, height / 2]);
+
+            // Load external data and boot
+            d3.json("jsons/world.json").then(function (data) {
+
+                // Draw the map
+                d3.select("#allobj")
+                    .selectAll("path")
+                    .data(data.features)
+                    .join("path")
+                    .attr("fill", "none")
+                    .attr("d", d3.geoPath()
+                        .projection(projection)
+                    )
+                    .style("stroke", "black")
+            })
+
+            // Load external data and boot
+            d3.json("jsons/the-equator.geojson").then(function (data) {
+
+                // Draw the map
+                d3.select("#equator")
+                    .selectAll("path")
+                    .data(data.features)
+                    .join("path")
+                    .attr("fill", "none")
+                    .attr("d", d3.geoPath()
+                        .projection(projection)
+                    )
+                    .style("stroke", "black")
+            })
+
+            // we have to check if the text attribute equatorText exists
+            // if not, we create it
+            if (d3.select("#equatorText").empty()) {
+                svg.append("text").attr("x", 10).attr("y", 173).text("Equator").style("font-size", "8pt").attr("alignment-baseline", "middle").style("font-style", "sans-serif").style("fill", "#f2f2f2").attr("id", "equatorText");
+            }
+        };
+
+        // the scale for the colors
+        function drawScale(id, interpolator) {
+            var svg = d3.select("#" + id);
+            var data = Array.from(Array(100).keys());
+
+            var cScale = d3.scaleLinear()
+                .domain([0, 100])
+                .range(["#277da1", "#f94144"]);
+
+            var legend = d3.legendColor()
+                .scale(cScale)
+                .orient('horizontal')
+                .shapeWidth(10)
+                .title('Watts per Square Meter')
+                .cells(15)
+                .labels(["-280", "", "", "", "", "", "", "0", "", "", "", "", "", "", "280"]);
+            svg.append('g')
+                .attr('transform', 'translate(515, 25)')
+                .call(legend);
+        }
+
+        // change rast function on click
+        function changeRaster(change, textChange) {
+            console.log(change);
+            document.getElementById("raster").remove();
+            // first I have to add a new <g> element to hold the raster
+            // but I need to make sure to append it in front of the allobj group otherwise it wont display correctly
+            d3.select("#World").insert("g", "#allobj")
+                .attr("id", "raster");
+            d3.select("#World").append("g").attr("id", "raster");
+            renderRaster(change);
+            renderMap();
+            appendTitle(textChange);
+        }
+
+        // title change function for every raster
+        function appendTitle(textAppend) {
+            d3.select("#title").remove();
+            d3.select("#allobj").append("text").text(textAppend).style("font-size", "9pt").style("font-style", "sans-serif").attr("id", "title").style("margin-left", "50px").style("font-weight", "bold").attr("x", 10).attr("y", 350).style("fill", "#f2f2f2");
+        }
+
+        // start all operations
+        function startOp() {
+            initZoom();
+            renderRaster('rasters/Jan21.tiff');
+            renderMap();
+            drawScale("seq37", d3.interpolateRdYlGn);
+            appendTitle("January 2021: Net Radiation");
+        }
+
+        startOp();
+    </script>
+
+</body>
+
+</html>
